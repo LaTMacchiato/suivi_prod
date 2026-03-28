@@ -1,0 +1,39 @@
+name: Actualisation horaire RTE
+
+# Déclenchement toutes les heures (à la minute 0) et bouton manuel
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  mise-a-jour:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Autorise le robot à sauvegarder le JSON
+
+    steps:
+      - name: 📥 Récupération du code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Configuration de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 📦 Installation des dépendances
+        run: pip install -r requirements.txt
+
+      - name: 🚀 Exécution du script RTE
+        env:
+          # Ici le robot va chercher vos mots de passe dans le coffre-fort GitHub
+          RTE_CLIENT_ID: ${{ secrets.RTE_CLIENT_ID }}
+          RTE_CLIENT_SECRET: ${{ secrets.RTE_CLIENT_SECRET }}
+        run: python script_rte.py
+
+      - name: 💾 Sauvegarde du JSON
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add data_nucleaire_france.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "⚡ MAJ auto de la production" && git push)
