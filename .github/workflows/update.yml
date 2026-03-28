@@ -1,16 +1,18 @@
 name: Actualisation horaire RTE
 
-# Déclenchement toutes les heures (à la minute 0) et bouton manuel
 on:
   schedule:
     - cron: '0 * * * *'
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   mise-a-jour:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Autorise le robot à sauvegarder le JSON
+      contents: write 
 
     steps:
       - name: 📥 Récupération du code
@@ -26,7 +28,6 @@ jobs:
 
       - name: 🚀 Exécution du script RTE
         env:
-          # Ici le robot va chercher vos mots de passe dans le coffre-fort GitHub
           RTE_CLIENT_ID: ${{ secrets.RTE_CLIENT_ID }}
           RTE_CLIENT_SECRET: ${{ secrets.RTE_CLIENT_SECRET }}
         run: python script_rte.py
