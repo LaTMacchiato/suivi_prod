@@ -5,6 +5,7 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:
 
+# On force l'utilisation du nouveau moteur GitHub pour éviter les avertissements jaunes
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -17,6 +18,8 @@ jobs:
     steps:
       - name: 📥 Récupération du code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Force le robot à lire tout l'historique pour éviter les erreurs de fusion
 
       - name: 🐍 Configuration de Python
         uses: actions/setup-python@v5
@@ -32,10 +35,20 @@ jobs:
           RTE_CLIENT_SECRET: ${{ secrets.RTE_CLIENT_SECRET }}
         run: python script_rte.py
 
- - name: 💾 Sauvegarde du JSON
+      - name: 💾 Sauvegarde du JSON
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # On cible uniquement notre fichier de données
           git add data_nucleaire_france.json
-          # S'il y a une différence, on commit, on télécharge vos dernières modifs, puis on pousse
-          git diff --quiet && git diff --staged --quiet || (git commit -m "⚡ MAJ auto de la production" && git pull --rebase origin main && git push)
+          
+          # 1. On tente de sauvegarder. Si la donnée est identique à l'heure précédente, 
+          # le script s'arrête gentiment ici (exit 0) pour ne pas polluer l'historique.
+          git commit -m "⚡ MAJ auto de la production" || exit 0
+          
+          # 2. On rapatrie vos modifications récentes (le auth.js ou le netlify.toml) proprement
+          git pull --rebase origin main
+          
+          # 3. On pousse le tout, fusionné et propre, sur GitHub
+          git push
