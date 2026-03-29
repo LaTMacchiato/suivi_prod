@@ -70,7 +70,7 @@ function chargerDonneesLive() {
                             <div class="penly-nom-row">
                                 <h4 class="penly-nom">${nomCentrale} <span class="penly-badge">Focus</span></h4>
                             </div>
-                            <div class="penly-prod">${prodTwh.toFixed(3)} <span class="penly-prod-unite">TWh</span></div>
+                            <div class="penly-prod">${prodTwh.toFixed(3)} <span class="penly-prod-unite">TWh en 2026</span></div>
                             <div class="penly-stats-row">
                                 <span>${nbUnites} unités</span>
                                 <span style="color: ${nbEnLigne > 0 ? '#3fb950' : 'inherit'}">${nbEnLigne} en prod.</span>
