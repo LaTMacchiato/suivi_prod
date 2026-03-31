@@ -136,7 +136,7 @@ def extraire_donnees_live():
     nb_en_production = sum(1 for en_marche in statut_actuel_reacteurs.values() if en_marche)
 
     data_export = {
-        "derniere_mise_a_jour": datetime.now().strftime("%d/%m/%Y à %H:%M"),
+        "derniere_mise_a_jour": derniere_donnee_recue.strftime("%d/%m/%Y à %H:%M"),
         "horodatage_fin_recherche": derniere_donnee_recue.isoformat(), # CORRECTION 3 : On utilise la vraie date
         "total_france_twh": round(total_france_mwh / 1_000_000, 3),
         "nombre_centrales_actives": len(centrales_twh),
