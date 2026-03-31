@@ -12,6 +12,26 @@ CLIENT_ID = os.environ.get("RTE_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("RTE_CLIENT_SECRET")
 CHEMIN_FICHIER = 'data_nucleaire_france.json'
 
+# --- 1. IL MANQUAIT CETTE FONCTION ---
+def obtenir_token(client_id, client_secret):
+    if not client_id or not client_secret:
+        raise ValueError("Les identifiants RTE_CLIENT_ID ou RTE_CLIENT_SECRET sont introuvables dans l'environnement.")
+        
+    credentials = f"{client_id}:{client_secret}"
+    b64_credentials = base64.b64encode(credentials.encode()).decode()
+    
+    url = "https://digital.iservices.rte-france.com/token/oauth/"
+    headers = {
+        "Authorization": f"Basic {b64_credentials}",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    
+    response = requests.post(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()["access_token"]
+    else:
+        raise Exception(f"Erreur d'authentification RTE: {response.text}")
+
 def extraire_donnees_live():
     annee_en_cours = datetime.now().year
     date_debut = datetime(annee_en_cours, 1, 1)
@@ -131,3 +151,7 @@ def extraire_donnees_live():
         json.dump(data_export, f, ensure_ascii=False, indent=4)
         
     print(f"\n✅ Terminé ! JSON généré avec succès. Marque-page placé à : {derniere_donnee_recue}")
+
+# --- 2. IL MANQUAIT LE DÉCLENCHEUR ---
+if __name__ == "__main__":
+    extraire_donnees_live()
