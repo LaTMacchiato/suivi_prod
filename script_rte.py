@@ -107,7 +107,7 @@ def extraire_donnees_live():
                     production_par_reacteur[nom_reacteur] = 0.0
                 
                 for releve in unite.get("values", []):
-                    releve_dt = datetime.fromisoformat(releve["start_date"])
+                    releve_dt = datetime.fromisoformat(releve["start_date"]).replace(tzinfo=None)
                     valeur_mw = releve.get("value", 0)
                     
                     # CORRECTION 1 : On met à jour notre marque-page avec la date réelle
