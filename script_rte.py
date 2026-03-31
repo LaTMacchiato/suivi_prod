@@ -5,9 +5,6 @@ import os
 from datetime import datetime, timedelta
 import time 
 
-# ==============================================================================
-# VOS IDENTIFIANTS RTE (Cachés en sécurité dans GitHub Secrets)
-# ==============================================================================
 CLIENT_ID = os.environ.get("RTE_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("RTE_CLIENT_SECRET")
 CHEMIN_FICHIER = 'data_nucleaire_france.json'
@@ -62,7 +59,6 @@ def extraire_donnees_live():
         print("⏳ Les données sont déjà à jour.")
         return
 
-    # NOUVEAU : On traque la date réelle de la dernière donnée fournie par RTE
     derniere_donnee_recue = date_debut
 
     print("Obtention du token d'accès...")
@@ -152,6 +148,5 @@ def extraire_donnees_live():
         
     print(f"\n✅ Terminé ! JSON généré avec succès. Marque-page placé à : {derniere_donnee_recue}")
 
-# --- 2. IL MANQUAIT LE DÉCLENCHEUR ---
 if __name__ == "__main__":
     extraire_donnees_live()
