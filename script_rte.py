@@ -12,25 +12,6 @@ CLIENT_ID = os.environ.get("RTE_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("RTE_CLIENT_SECRET")
 CHEMIN_FICHIER = 'data_nucleaire_france.json'
 
-def obtenir_token(client_id, client_secret):
-    if not client_id or not client_secret:
-        raise ValueError("Les identifiants RTE_CLIENT_ID ou RTE_CLIENT_SECRET sont introuvables dans l'environnement.")
-        
-    credentials = f"{client_id}:{client_secret}"
-    b64_credentials = base64.b64encode(credentials.encode()).decode()
-    
-    url = "https://digital.iservices.rte-france.com/token/oauth/"
-    headers = {
-        "Authorization": f"Basic {b64_credentials}",
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-    
-    response = requests.post(url, headers=headers)
-    if response.status_code == 200:
-        return response.json()["access_token"]
-    else:
-        raise Exception(f"Erreur d'authentification RTE: {response.text}")
-
 def extraire_donnees_live():
     annee_en_cours = datetime.now().year
     date_debut = datetime(annee_en_cours, 1, 1)
@@ -61,12 +42,15 @@ def extraire_donnees_live():
         print("⏳ Les données sont déjà à jour.")
         return
 
+    # NOUVEAU : On traque la date réelle de la dernière donnée fournie par RTE
+    derniere_donnee_recue = date_debut
+
     print("Obtention du token d'accès...")
     token = obtenir_token(CLIENT_ID, CLIENT_SECRET)
     headers = {"Authorization": f"Bearer {token}"}
     url_api = "https://digital.iservices.rte-france.com/open_api/actual_generation/v1/actual_generations_per_unit"
     
-    # 2. DÉCOUPAGE INTELLIGENT (72h minimum pour éviter l'erreur F05 de RTE)
+    # 2. DÉCOUPAGE INTELLIGENT
     tranches = []
     courant = date_debut
     while courant < date_fin:
@@ -85,7 +69,6 @@ def extraire_donnees_live():
     for tranche in tranches:
         str_debut = tranche["api_debut"].strftime("%Y-%m-%dT%H:%M:%S+01:00")
         str_fin = tranche["api_fin"].strftime("%Y-%m-%dT%H:%M:%S+01:00")
-        vrai_debut_timestamp = tranche["vrai_debut"].timestamp()
         
         params = {"start_date": str_debut, "end_date": str_fin}
         response = requests.get(url_api, headers=headers, params=params)
@@ -107,10 +90,16 @@ def extraire_donnees_live():
                     releve_dt = datetime.fromisoformat(releve["start_date"])
                     valeur_mw = releve.get("value", 0)
                     
-                    if releve_dt.timestamp() >= vrai_debut_timestamp:
+                    # CORRECTION 1 : On met à jour notre marque-page avec la date réelle
+                    if releve_dt > derniere_donnee_recue:
+                        derniere_donnee_recue = releve_dt
+                    
+                    # CORRECTION 2 : Strictement supérieur (>) pour ne pas compter la même heure en double
+                    if releve_dt > date_debut and releve_dt.timestamp() > tranche["vrai_debut"].timestamp():
                         if valeur_mw > 0:
                             production_par_reacteur[nom_reacteur] += valeur_mw
                     
+                    # Le statut en direct prend toujours la dernière valeur lue
                     statut_actuel_reacteurs[nom_reacteur] = (valeur_mw > 0)
         time.sleep(0.5)
 
@@ -128,7 +117,7 @@ def extraire_donnees_live():
 
     data_export = {
         "derniere_mise_a_jour": datetime.now().strftime("%d/%m/%Y à %H:%M"),
-        "horodatage_fin_recherche": date_fin.isoformat(), 
+        "horodatage_fin_recherche": derniere_donnee_recue.isoformat(), # CORRECTION 3 : On utilise la vraie date
         "total_france_twh": round(total_france_mwh / 1_000_000, 3),
         "nombre_centrales_actives": len(centrales_twh),
         "nombre_reacteurs_total": len(production_par_reacteur),
@@ -141,7 +130,4 @@ def extraire_donnees_live():
     with open(CHEMIN_FICHIER, 'w', encoding='utf-8') as f:
         json.dump(data_export, f, ensure_ascii=False, indent=4)
         
-    print(f"\n✅ Terminé ! JSON généré avec succès.")
-
-if __name__ == "__main__":
-    extraire_donnees_live()
+    print(f"\n✅ Terminé ! JSON généré avec succès. Marque-page placé à : {derniere_donnee_recue}")
