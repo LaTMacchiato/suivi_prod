@@ -4,7 +4,7 @@
     "total_france_twh": 187.365,
     "nombre_centrales_actives": 18,
     "nombre_reacteurs_total": 57,
-    "nombre_reacteurs_en_production": 38,
+    "nombre_reacteurs_en_production": 37,
     "production_par_centrale_twh": {
         "GRAVELINES": 17.043,
         "PALUEL": 14.147,
@@ -103,7 +103,7 @@
         "CHINON 2": true,
         "CHINON 3": true,
         "CHINON 4": true,
-        "CHOOZ 1": true,
+        "CHOOZ 1": false,
         "CHOOZ 2": true,
         "CIVAUX 1": true,
         "CIVAUX 2": true,
