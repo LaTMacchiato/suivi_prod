@@ -41,7 +41,15 @@ function chargerDonneesLive() {
             return response.json();
         })
         .then(data => {
-            // 1. Mise à jour des compteurs globaux
+            const anneeEnCours = data.annee_en_cours
+                || (data.horodatage_fin_recherche ? new Date(data.horodatage_fin_recherche).getFullYear() : new Date().getFullYear());
+
+            // 1. Mise à jour de l'année et des compteurs globaux
+            const titreAnneeEl = document.getElementById('titre-annee');
+            if (titreAnneeEl) {
+                titreAnneeEl.innerText = `Prod. nucléaire en ${anneeEnCours}`;
+            }
+            document.title = `Suivi ${anneeEnCours} de la production nucléaire française par unités`;
             document.getElementById('date-maj').innerText = "Actualisé le : " + data.derniere_mise_a_jour;
             document.getElementById('date-maj').style.color = "var(--text-main)";
             document.getElementById('total-france').innerHTML = formatNum(data.total_france_twh.toFixed(1)) + '<span class="kpi-unit">TWh</span>';
@@ -70,7 +78,7 @@ function chargerDonneesLive() {
                             <div class="penly-nom-row">
                                 <h4 class="penly-nom">${nomCentrale} <span class="penly-badge">Focus</span></h4>
                             </div>
-                            <div class="penly-prod">${prodTwh.toFixed(3)} <span class="penly-prod-unite">TWh en 2026</span></div>
+                            <div class="penly-prod">${prodTwh.toFixed(3)} <span class="penly-prod-unite">TWh en ${anneeEnCours}</span></div>
                             <div class="penly-stats-row">
                                 <span>${nbUnites} unités</span>
                                 <span style="color: ${nbEnLigne > 0 ? '#3fb950' : 'inherit'}">${nbEnLigne} en prod.</span>
@@ -128,3 +136,35 @@ chargerDonneesLive();
 
 // Actualisation toutes les 4 heures (14 400 000 ms) pour la version de production Github/Netlify
 setInterval(chargerDonneesLive, 14400000);
+
+// Gestion de la modale Mentions légales & Confidentialité (100 % locale, sans dépendance externe)
+(function initialiserModaleLegale() {
+    const legalDialog = document.getElementById('legal-modal');
+    const openBtn = document.getElementById('open-legal-modal');
+    if (!legalDialog || !openBtn) return;
+
+    // Fallback 100% local si l'API Invoker Commands (commandfor / command) n'est pas supportée nativement
+    if (!('commandForElement' in HTMLButtonElement.prototype)) {
+        openBtn.addEventListener('click', () => {
+            legalDialog.showModal();
+        });
+    }
+
+    // Fallback pour le light-dismiss (clic sur le backdrop à l'extérieur de la modale) si closedby="any" n'est pas supporté
+    if (!('closedBy' in HTMLDialogElement.prototype)) {
+        legalDialog.addEventListener('click', (event) => {
+            if (event.target !== legalDialog) return;
+
+            const rect = legalDialog.getBoundingClientRect();
+            const isDialogContent = (
+                rect.top <= event.clientY &&
+                event.clientY <= rect.top + rect.height &&
+                rect.left <= event.clientX &&
+                event.clientX <= rect.left + rect.width
+            );
+
+            if (isDialogContent) return;
+            legalDialog.close();
+        });
+    }
+})();

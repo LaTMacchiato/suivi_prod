@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suivi annuel de la production nucléaire française par unités</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preload" href="fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="/favicon.ico">
 </head>
@@ -12,7 +12,13 @@
 
     <div class="container">
         <div class="header">
-            <h2>Prod. nucléaire en 2026</h2>
+            <div class="header-left">
+                <h2 id="titre-annee">Prod. nucléaire</h2>
+                <nav class="main-nav" aria-label="Navigation principale">
+                    <a href="index.html" class="nav-link active" aria-current="page">Parc en direct</a>
+                    <a href="statistiques.html" class="nav-link">Statistiques</a>
+                </nav>
+            </div>
             <div class="date-maj" id="date-maj">Connexion au serveur...</div>
         </div>
 
@@ -39,9 +45,70 @@
         </div>
 
         <div class="footer">
-            Source des données : <a href="https://data.rte-france.com/" target="_blank" rel="noopener noreferrer">Portail API Open Data RTE</a>
+            <div>Source des données : <a href="https://data.rte-france.com/" target="_blank" rel="noopener noreferrer">Portail API Open Data RTE</a></div>
+            <button type="button" class="legal-trigger-btn" id="open-legal-modal" commandfor="legal-modal" command="show-modal">
+                Mentions légales &amp; Confidentialité (100% Local)
+            </button>
         </div>
     </div>
+
+    <dialog id="legal-modal" class="legal-modal" closedby="any" aria-labelledby="legal-modal-title">
+        <div class="legal-modal-container">
+            <div class="legal-modal-header">
+                <div class="legal-modal-title-grp">
+                    <span class="penly-badge">100% Local</span>
+                    <h3 id="legal-modal-title">Mentions légales &amp; Confidentialité</h3>
+                </div>
+                <form method="dialog">
+                    <button type="submit" class="legal-modal-close-icon" aria-label="Fermer la fenêtre" autofocus>✕</button>
+                </form>
+            </div>
+
+            <div class="legal-modal-body">
+                <section class="legal-section">
+                    <h4>1. Éditeur du site</h4>
+                    <p>
+                        Conformément à l'article 6-III-2 de la loi n° 2004-575 du 21 juin 2004 (LCEN), l'éditeur de ce site, agissant à titre non professionnel, a choisi de conserver l'anonymat.
+                        Contact : <a href="mailto:contact@thmarchand.fr">contact@thmarchand.fr</a>
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h4>2. Hébergement</h4>
+                    <p>
+                        Ce site est hébergé par GitHub Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis (service GitHub Pages).
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h4>3. Fonctionnement &amp; Origine des données (100 % Local)</h4>
+                    <p>
+                        Ce tableau de bord fonctionne exclusivement en local dans votre navigateur, sans émettre aucune requête réseau vers des services tiers (aucun CDN externe, aucune police distante). Les données publiques de production nucléaire (issues du portail Open Data RTE) sont agrégées en amont et consultées uniquement via le fichier statique local <code>data_nucleaire_france.json</code> hébergé directement avec le site.
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h4>4. Données personnelles et journaux serveur (RGPD)</h4>
+                    <p>
+                        L'éditeur du site ne collecte, ne stocke et n'analyse aucune donnée personnelle, et n'utilise aucun outil de mesure d'audience ni ressource tierce externe. Toutefois, à des fins de sécurité et de prévention des abus (défense contre les attaques DDoS), l'hébergeur GitHub Pages enregistre temporairement l'adresse IP des visiteurs dans ses journaux techniques (logs) sur la base de l'intérêt légitime (Art. 6.1.f du RGPD). Plus d'informations sur la <a href="https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">Déclaration de confidentialité de GitHub</a>.
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h4>5. Stockage local (Cookies / LocalStorage)</h4>
+                    <p>
+                        Ce site n'utilise aucun cookie (ni technique, ni publicitaire, ni de mesure d'audience) et n'enregistre aucune donnée dans l'espace de stockage local de votre navigateur (<code>localStorage</code>, <code>sessionStorage</code> ou <code>IndexedDB</code>). Aucun bandeau de consentement n'est donc requis conformément aux directives de la CNIL.
+                    </p>
+                </section>
+            </div>
+
+            <div class="legal-modal-footer">
+                <form method="dialog">
+                    <button type="submit" class="legal-modal-btn-primary">Fermer</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
 
     <script src="app.js" defer></script>
 </body>
