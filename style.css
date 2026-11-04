@@ -150,6 +150,17 @@ h2 { margin: 0; color: var(--edf-blue); font-size: 1.8rem; font-weight: 800; let
 .footer a { color: var(--edf-mid-blue); text-decoration: none; font-weight: 600; transition: color 0.2s; }
 .footer a:hover { color: var(--edf-orange); text-decoration: underline; }
 
+.footer-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.footer-disclaimer {
+    font-size: 0.76rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
 .legal-trigger-btn {
     background: #fff;
     color: var(--edf-blue);

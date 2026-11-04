@@ -168,7 +168,10 @@
         </section>
 
         <div class="footer">
-            <div>Source des données : <a href="https://data.rte-france.com/" target="_blank" rel="noopener noreferrer">Portail API Open Data RTE</a></div>
+            <div class="footer-left">
+                <span>Source des données : <a href="https://data.rte-france.com/" target="_blank" rel="noopener noreferrer">Portail API Open Data RTE</a> (Licence Ouverte v2.0)</span>
+                <span class="footer-disclaimer">Outil indépendant non affilié à Électricité de France (EDF SA)</span>
+            </div>
             <button type="button" class="legal-trigger-btn" id="open-legal-modal" commandfor="legal-modal" command="show-modal">
                 Mentions légales &amp; Confidentialité (100% Local)
             </button>
@@ -189,38 +192,62 @@
 
             <div class="legal-modal-body">
                 <section class="legal-section">
-                    <h4>1. Éditeur du site</h4>
+                    <h4>1. Éditeur du site (LCEN Art. 6-III-2)</h4>
                     <p>
-                        Conformément à l'article 6-III-2 de la loi n° 2004-575 du 21 juin 2004 (LCEN), l'éditeur de ce site, agissant à titre non professionnel, a choisi de conserver l'anonymat.
-                        Contact : <a href="mailto:contact@thmarchand.fr">contact@thmarchand.fr</a>
+                        Conformément à l'article 6-III-2 de la loi n° 2004-575 du 21 juin 2004 pour la Confiance dans l'Économie Numérique (LCEN), l'éditeur de ce site, agissant à titre non professionnel, a choisi de préserver son anonymat. Ses éléments d'identification personnelle ont été régulièrement transmis à l'hébergeur.
+                        <br>Contact électronique direct : <a href="mailto:contact@thmarchand.fr">contact@thmarchand.fr</a>
                     </p>
                 </section>
 
                 <section class="legal-section">
-                    <h4>2. Hébergement</h4>
+                    <h4>2. Hébergement &amp; Transferts hors UE (LCEN Art. 6-I-2 &amp; RGPD)</h4>
                     <p>
-                        Ce site est hébergé par GitHub Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis (service GitHub Pages).
+                        Ce site est hébergé par GitHub Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.
+                        <br>Téléphone : +1 877 448 4820 — Support technique en ligne : <a href="https://support.github.com" target="_blank" rel="noopener noreferrer">support.github.com</a>.
+                        <br>Les transferts de données techniques (logs réseau) vers les serveurs de GitHub Inc. aux États-Unis sont encadrés par la décision d'adéquation de la Commission européenne du 10 juillet 2023 relative au Cadre de protection des données UE-États-Unis (<em>EU-U.S. Data Privacy Framework</em> - DPF), auquel Microsoft Corporation / GitHub Inc. est certifié.
                     </p>
                 </section>
 
                 <section class="legal-section">
-                    <h4>3. Fonctionnement &amp; Origine des données (100 % Local)</h4>
+                    <h4>3. Propriété intellectuelle, Marques &amp; Non-affiliation (CPI Art. L.713-6)</h4>
                     <p>
-                        Ce tableau de bord fonctionne exclusivement en local dans votre navigateur, sans émettre aucune requête réseau vers des services tiers (aucun CDN externe, aucune police distante). Les données publiques de production nucléaire (issues du portail Open Data RTE) sont agrégées en amont et consultées uniquement via le fichier statique local <code>data_nucleaire_france.json</code> hébergé directement avec le site.
+                        Ce site est un outil indépendant d'information citoyenne et d'analyse technique. <strong>Il n'est en aucune manière édité, financé, affilié, sponsorisé ni approuvé par la société Électricité de France (EDF SA).</strong>
+                        La marque nominale « EDF » et les marques associées citées sont la propriété exclusive de leurs titulaires respectifs et ne sont utilisées ici qu'à des fins purement descriptives de l'origine industrielle des installations, conformément à l'article L.713-6 du Code de la Propriété Intellectuelle.
                     </p>
                 </section>
 
                 <section class="legal-section">
-                    <h4>4. Données personnelles et journaux serveur (RGPD)</h4>
+                    <h4>4. Origine des données &amp; Licences (Open Data RTE &amp; Polices)</h4>
                     <p>
-                        L'éditeur du site ne collecte, ne stocke et n'analyse aucune donnée personnelle, et n'utilise aucun outil de mesure d'audience ni ressource tierce externe. Toutefois, à des fins de sécurité et de prévention des abus (défense contre les attaques DDoS), l'hébergeur GitHub Pages enregistre temporairement l'adresse IP des visiteurs dans ses journaux techniques (logs) sur la base de l'intérêt légitime (Art. 6.1.f du RGPD). Plus d'informations sur la <a href="https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">Déclaration de confidentialité de GitHub</a>.
+                        <strong>Données de production :</strong> Les données publiques de production nucléaire sont extraites du portail API Open Data de RTE (Réseau de Transport d'Électricité) et sont réutilisées sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" target="_blank" rel="noopener noreferrer">Licence Ouverte v2.0 (Etalab)</a>.
+                        <br><strong>Typographie :</strong> La police de caractères <em>Inter</em> (conçue par Rasmus Andersson) est auto-hébergée localement sous licence libre <a href="fonts/OFL.txt" target="_blank">SIL Open Font License (OFL) version 1.1</a>.
                     </p>
                 </section>
 
                 <section class="legal-section">
-                    <h4>5. Stockage local (Cookies / LocalStorage)</h4>
+                    <h4>5. Données personnelles, Droits &amp; Voie de recours CNIL (RGPD Art. 12, 13 &amp; 77)</h4>
                     <p>
-                        Ce site n'utilise aucun cookie (ni technique, ni publicitaire, ni de mesure d'audience) et n'enregistre aucune donnée dans l'espace de stockage local de votre navigateur (<code>localStorage</code>, <code>sessionStorage</code> ou <code>IndexedDB</code>). Aucun bandeau de consentement n'est donc requis conformément aux directives de la CNIL.
+                        L'éditeur du site ne collecte, ne stocke, ne revend et n'analyse aucune donnée personnelle de ses visiteurs, et n'utilise aucun outil de mesure d'audience ni script tiers.
+                        Toutefois, pour assurer la sécurité de l'infrastructure et la prévention des abus (défense contre les attaques DDoS), l'hébergeur GitHub Pages consigne temporairement les adresses IP et requêtes réseau dans ses journaux techniques sur la base de son intérêt légitime (Art. 6.1.f du RGPD) pour une durée glissante n'excédant pas 90 jours.
+                    </p>
+                    <p>
+                        <strong>Exercice de vos droits :</strong> Conformément au RGPD, vous disposez d'un droit d'accès et d'opposition pour motif légitime en écrivant à : <a href="mailto:contact@thmarchand.fr">contact@thmarchand.fr</a>.
+                        <br><strong>Réclamation auprès de la CNIL :</strong> Si vous estimez, après nous avoir contactés, que vos droits ne sont pas respectés, vous disposez du droit légal d'introduire une réclamation auprès de l'autorité de contrôle compétente : la <strong>CNIL (Commission Nationale de l'Informatique et des Libertés)</strong> sur son site officiel <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">www.cnil.fr</a> ou par voie postale au 3 Place de Fontenoy, TSA 80715, 75334 Paris Cedex 07.
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h4>6. Traceurs &amp; Cookies (Art. 82 Loi Informatique et Libertés)</h4>
+                    <p>
+                        Ce site n'utilise aucun cookie (ni technique, ni publicitaire, ni d'audience) et n'écrit aucune donnée dans l'espace de stockage de votre navigateur (<code>localStorage</code>, <code>sessionStorage</code>, <code>IndexedDB</code>). Il est totalement exempté de bandeau de consentement conformément aux délibérations n° 2020-091 et 2020-092 de la CNIL.
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h4>7. Conditions d'utilisation &amp; Limitation de responsabilité (Art. 1240 Code civil)</h4>
+                    <p>
+                        Les visualisations, calculs et graphiques sont fournis « en l'état » (<em>as-is</em>), à titre strictement informatif et documentaire, sans garantie d'exhaustivité, d'exactitude absolue ni de continuité de service en temps réel.
+                        L'éditeur décline toute responsabilité quant aux interprétations, usages professionnels ou décisions économiques et financières fondées sur les informations consultées sur ce site.
                     </p>
                 </section>
             </div>
