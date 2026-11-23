@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Statistiques mensuelles et intercomparaison pluriannuelle de la production nucléaire française par centrale, issues de l'Open Data RTE.">
+    <meta property="og:title" content="Statistiques & Comparaison annuelle — Production nucléaire française">
+    <meta property="og:description" content="Comparez l'évolution mensuelle, les cumuls annuels et les écarts par centrale nucléaire (données 100 % locales Open Data RTE).">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://prod.thmarchand.fr/statistiques.html">
+    <meta property="og:locale" content="fr_FR">
     <title>Statistiques &amp; Comparaison annuelle — Production nucléaire française</title>
     <link rel="preload" href="fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="style.css">
@@ -11,163 +17,174 @@
 <body>
 
     <div class="container">
-        <div class="header">
+        <header class="header">
             <div class="header-left">
-                <h2 id="stats-titre-annee">Statistiques nucléaires</h2>
+                <h1 id="stats-titre-annee">Statistiques nucléaires</h1>
                 <nav class="main-nav" aria-label="Navigation principale">
                     <a href="index.html" class="nav-link">Parc en direct</a>
                     <a href="statistiques.html" class="nav-link active" aria-current="page">Statistiques</a>
                 </nav>
             </div>
-            <div class="date-maj" id="date-maj">Connexion au serveur...</div>
-        </div>
-
-        <!-- CONTRÔLES STATISTIQUES : SÉLECTION CENTRALE & INTERCOMPARAISON DES ANNÉES -->
-        <section class="stats-filter-card" aria-labelledby="filter-title">
-            <div class="stats-filter-header">
-                <div class="stats-filter-title-grp">
-                    <h3 id="filter-title">Filtres &amp; Intercomparaison</h3>
-                    <span class="perimetre-badge" id="perimetre-badge">France entière</span>
-                </div>
-                <button type="button" class="btn-global-reset is-active" id="btn-reset-global" title="Réinitialiser pour afficher toutes les centrales">
-                    Vue Globale
-                </button>
+            <div class="header-right">
+                <div class="date-maj" id="date-maj" aria-live="polite">Connexion au serveur...</div>
             </div>
+        </header>
 
-            <div class="stats-selectors-row">
-                <!-- 1. SÉLECTION MONO-CHOIX DE LA CENTRALE -->
-                <div class="stats-select-group stats-select-grow">
-                    <label for="select-centrale" class="stats-select-label">Centrale nucléaire :</label>
-                    <div class="select-wrapper">
-                        <select id="select-centrale" class="stats-select">
-                            <option value="">⚡ France entière (Toutes les centrales)</option>
-                            <!-- Rempli dynamiquement avec les 18 centrales -->
-                        </select>
-                        <span class="select-arrow" aria-hidden="true">▼</span>
+        <main>
+            <!-- CONTRÔLES STATISTIQUES : SÉLECTION CENTRALE & INTERCOMPARAISON DES ANNÉES -->
+            <section class="stats-filter-card" aria-labelledby="filter-title">
+                <div class="stats-filter-header">
+                    <div class="stats-filter-title-grp">
+                        <h2 id="filter-title">Filtres &amp; Intercomparaison</h2>
+                        <span class="perimetre-badge" id="perimetre-badge">France entière</span>
+                        <span class="perimetre-part-badge" id="perimetre-part-badge" hidden></span>
                     </div>
-                </div>
-
-                <!-- 2. SÉLECTION DE L'ANNÉE ANALYSÉE -->
-                <div class="stats-select-group">
-                    <label for="select-annee-analysee" class="stats-select-label">Année analysée :</label>
-                    <div class="select-wrapper">
-                        <select id="select-annee-analysee" class="stats-select stats-select-year">
-                            <!-- ex: 2026, 2027 -->
-                        </select>
-                        <span class="select-arrow" aria-hidden="true">▼</span>
-                    </div>
-                </div>
-
-                <!-- 3. SÉLECTION DE L'ANNÉE D'INTERCOMPARAISON -->
-                <div class="stats-select-group">
-                    <label for="select-annee-ref" class="stats-select-label">Comparer avec :</label>
-                    <div class="select-wrapper">
-                        <select id="select-annee-ref" class="stats-select stats-select-year">
-                            <!-- ex: 2025, 2024 -->
-                        </select>
-                        <span class="select-arrow" aria-hidden="true">▼</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CARTES KPI COMPARATIVES (ANNÉE N vs ANNÉE DE RÉFÉRENCE) -->
-        <div class="kpi-row stats-kpi-row">
-            <div class="kpi-card">
-                <h3 id="kpi-title-cumul-n">Cumul Annuel (Mois révolus)</h3>
-                <div class="kpi-value" id="kpi-val-cumul-n">--<span class="kpi-unit">TWh</span></div>
-                <div class="kpi-sub-row">
-                    <span class="evol-pill" id="kpi-evol-pct">--</span>
-                    <span class="kpi-sub-text" id="kpi-evol-diff">vs période comparable</span>
-                </div>
-                <div class="kpi-extra-info" id="kpi-extra-ongoing"></div>
-            </div>
-
-            <div class="kpi-card">
-                <h3 id="kpi-title-ref-n1">Référence Année précédente</h3>
-                <div class="kpi-value kpi-value-secondary" id="kpi-val-comparable-n1">--<span class="kpi-unit">TWh</span></div>
-                <div class="kpi-sub-row">
-                    <span class="kpi-sub-text" id="kpi-val-total-n1">Total 12 mois : -- TWh</span>
-                </div>
-                <div class="kpi-progress-track" aria-hidden="true">
-                    <div class="kpi-progress-bar" id="kpi-progress-bar" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <h3 id="kpi-title-moyenne">Moyenne mensuelle &amp; Pic</h3>
-                <div class="kpi-value" id="kpi-val-moyenne-n">--<span class="kpi-unit">TWh / mois</span></div>
-                <div class="kpi-sub-row">
-                    <span class="kpi-sub-text" id="kpi-sub-record">Mois record : --</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- COURBE D'ÉVOLUTION SUR 12 MOIS -->
-        <section class="chart-card" aria-labelledby="chart-section-title">
-            <div class="chart-card-header">
-                <div>
-                    <h3 id="chart-section-title" class="chart-title">Courbe de production sur 12 mois</h3>
-                    <div class="chart-legend" id="chart-legend">
-                        <span class="legend-item">
-                            <span class="legend-line legend-line-current"></span>
-                            <span id="legend-label-n">Année en cours</span>
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-line legend-line-prev"></span>
-                            <span id="legend-label-n1">Année précédente</span>
-                        </span>
-                    </div>
-                </div>
-
-                <div class="chart-mode-toggle" role="group" aria-label="Mode d'affichage de la courbe">
-                    <button type="button" class="mode-btn active" id="mode-mensuel" data-mode="mensuel">
-                        Production mensuelle
-                    </button>
-                    <button type="button" class="mode-btn" id="mode-cumule" data-mode="cumule">
-                        Cumul annuel
+                    <button type="button" class="btn-global-reset is-active" id="btn-reset-global" title="Réinitialiser pour afficher toutes les centrales">
+                        Vue Globale
                     </button>
                 </div>
-            </div>
 
-            <!-- Bandeau de détail interactif au survol d'un mois -->
-            <div class="chart-hover-banner" id="chart-hover-banner" aria-live="polite">
-                Survolez ou sélectionnez un mois sur le graphique pour comparer les valeurs détaillées.
-            </div>
+                <div class="stats-selectors-row">
+                    <div class="stats-select-group stats-select-grow">
+                        <label for="select-centrale" class="stats-select-label">Centrale nucléaire :</label>
+                        <div class="select-wrapper">
+                            <select id="select-centrale" class="stats-select">
+                                <option value="">⚡ France entière (Toutes les centrales)</option>
+                            </select>
+                            <span class="select-arrow" aria-hidden="true">▼</span>
+                        </div>
+                    </div>
 
-            <div class="chart-svg-wrapper" id="chart-svg-wrapper">
-                <!-- SVG généré en 100% local par stats.js -->
-            </div>
-        </section>
+                    <div class="stats-select-group">
+                        <label for="select-annee-analysee" class="stats-select-label">Année analysée :</label>
+                        <div class="select-wrapper">
+                            <select id="select-annee-analysee" class="stats-select stats-select-year">
+                            </select>
+                            <span class="select-arrow" aria-hidden="true">▼</span>
+                        </div>
+                    </div>
 
-        <!-- TABLEAU MENSUEL COMPARATIF SUR 12 MOIS -->
-        <section class="table-card" aria-labelledby="table-section-title">
-            <div class="table-card-header">
-                <h3 id="table-section-title" class="chart-title">Détail mensuel comparé (12 mois)</h3>
-                <span class="table-subtitle" id="table-perimetre-label">France entière</span>
-            </div>
-            <div class="table-responsive">
-                <table class="stats-table">
-                    <thead>
-                        <tr>
-                            <th scope="col">Mois</th>
-                            <th scope="col" class="num-col" id="th-annee-n1">Année N-1 (TWh)</th>
-                            <th scope="col" class="num-col" id="th-annee-n">Année N (TWh)</th>
-                            <th scope="col" class="num-col">Écart (TWh)</th>
-                            <th scope="col" class="num-col">Évolution (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stats-table-body">
-                        <!-- Lignes générées par stats.js -->
-                    </tbody>
-                    <tfoot id="stats-table-foot">
-                        <!-- Total généré par stats.js -->
-                    </tfoot>
-                </table>
-            </div>
-        </section>
+                    <div class="stats-select-group">
+                        <label for="select-annee-ref" class="stats-select-label">Comparer avec :</label>
+                        <div class="select-wrapper">
+                            <select id="select-annee-ref" class="stats-select stats-select-year">
+                            </select>
+                            <span class="select-arrow" aria-hidden="true">▼</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        <div class="footer">
+            <!-- CARTES KPI COMPARATIVES (ANNÉE N vs ANNÉE DE RÉFÉRENCE) -->
+            <section class="kpi-row stats-kpi-row" aria-label="Indicateurs comparatifs">
+                <div class="kpi-card">
+                    <h2 id="kpi-title-cumul-n">Cumul Annuel (Mois révolus)</h2>
+                    <div class="kpi-value" id="kpi-val-cumul-n">--<span class="kpi-unit">TWh</span></div>
+                    <div class="kpi-sub-row">
+                        <span class="evol-pill" id="kpi-evol-pct">--</span>
+                        <span class="kpi-sub-text" id="kpi-evol-diff">vs période comparable</span>
+                    </div>
+                    <div class="kpi-extra-info" id="kpi-extra-ongoing"></div>
+                    <div class="kpi-projection" id="kpi-projection" hidden></div>
+                </div>
+
+                <div class="kpi-card">
+                    <h2 id="kpi-title-ref-n1">Référence Année précédente</h2>
+                    <div class="kpi-value kpi-value-secondary" id="kpi-val-comparable-n1">--<span class="kpi-unit">TWh</span></div>
+                    <div class="kpi-sub-row">
+                        <span class="kpi-sub-text" id="kpi-val-total-n1">Total 12 mois : -- TWh</span>
+                    </div>
+                    <div class="kpi-progress-track" aria-hidden="true">
+                        <div class="kpi-progress-bar" id="kpi-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <h2 id="kpi-title-moyenne">Moyenne mensuelle &amp; Pic</h2>
+                    <div class="kpi-value" id="kpi-val-moyenne-n">--<span class="kpi-unit">TWh / mois</span></div>
+                    <div class="kpi-sub-row">
+                        <span class="kpi-sub-text" id="kpi-sub-record">Mois record : --</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COURBE D'ÉVOLUTION SUR 12 MOIS -->
+            <section class="chart-card" aria-labelledby="chart-section-title">
+                <div class="chart-card-header">
+                    <div>
+                        <h2 id="chart-section-title" class="chart-title">Courbe de production sur 12 mois</h2>
+                        <div class="chart-legend" id="chart-legend">
+                            <span class="legend-item">
+                                <span class="legend-line legend-line-current"></span>
+                                <span id="legend-label-n">Année en cours</span>
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-line legend-line-prev"></span>
+                                <span id="legend-label-n1">Année précédente</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="chart-controls-grp">
+                        <div class="chart-mode-toggle" role="group" aria-label="Mode d'affichage du graphique">
+                            <button type="button" class="mode-btn active" id="mode-mensuel" data-mode="mensuel" aria-pressed="true">
+                                Mensuel
+                            </button>
+                            <button type="button" class="mode-btn" id="mode-cumule" data-mode="cumule" aria-pressed="false">
+                                Cumul
+                            </button>
+                            <button type="button" class="mode-btn" id="mode-ecarts" data-mode="ecarts" aria-pressed="false">
+                                Écarts (+/-)
+                            </button>
+                        </div>
+                        <button type="button" class="btn-export" id="btn-export-svg" title="Télécharger le graphique au format SVG">
+                            Exporter SVG
+                        </button>
+                    </div>
+                </div>
+
+                <div class="chart-hover-banner" id="chart-hover-banner" aria-live="polite">
+                    Survolez ou sélectionnez un mois sur le graphique pour comparer les valeurs détaillées.
+                </div>
+
+                <div class="chart-svg-wrapper" id="chart-svg-wrapper">
+                    <!-- SVG généré en 100% local par stats.js -->
+                </div>
+            </section>
+
+            <!-- TABLEAU MENSUEL COMPARATIF SUR 12 MOIS -->
+            <section class="table-card" aria-labelledby="table-section-title">
+                <div class="table-card-header">
+                    <h2 id="table-section-title" class="chart-title">Détail mensuel comparé (12 mois)</h2>
+                    <div class="table-actions-grp">
+                        <span class="table-subtitle" id="table-perimetre-label">France entière</span>
+                        <button type="button" class="btn-export" id="btn-export-csv" title="Télécharger le tableau au format CSV (Excel)">
+                            Exporter CSV
+                        </button>
+                    </div>
+                </div>
+                <div tabindex="0" role="region" aria-labelledby="table-section-title" class="table-responsive">
+                    <table class="stats-table" id="stats-table">
+                        <caption class="sr-only">Détail mensuel comparé sur 12 mois entre l'année analysée et l'année de référence</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Mois</th>
+                                <th scope="col" class="num-col" id="th-annee-n1">Année N-1 (TWh)</th>
+                                <th scope="col" class="num-col" id="th-annee-n">Année N (TWh)</th>
+                                <th scope="col" class="num-col">Écart (TWh)</th>
+                                <th scope="col" class="num-col">Évolution (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stats-table-body">
+                        </tbody>
+                        <tfoot id="stats-table-foot">
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
             <div class="footer-left">
                 <span>Source des données : <a href="https://data.rte-france.com/" target="_blank" rel="noopener noreferrer">Portail API Open Data RTE</a> (Licence Ouverte v2.0)</span>
                 <span class="footer-disclaimer">Outil indépendant non affilié à Électricité de France (EDF SA)</span>
@@ -175,7 +192,7 @@
             <button type="button" class="legal-trigger-btn" id="open-legal-modal" commandfor="legal-modal" command="show-modal">
                 Mentions légales &amp; Confidentialité (100% Local)
             </button>
-        </div>
+        </footer>
     </div>
 
     <dialog id="legal-modal" class="legal-modal" closedby="any" aria-labelledby="legal-modal-title">
@@ -183,7 +200,7 @@
             <div class="legal-modal-header">
                 <div class="legal-modal-title-grp">
                     <span class="penly-badge">100% Local</span>
-                    <h3 id="legal-modal-title">Mentions légales &amp; Confidentialité</h3>
+                    <h2 id="legal-modal-title">Mentions légales &amp; Confidentialité</h2>
                 </div>
                 <form method="dialog">
                     <button type="submit" class="legal-modal-close-icon" aria-label="Fermer la fenêtre" autofocus>✕</button>
@@ -192,7 +209,7 @@
 
             <div class="legal-modal-body">
                 <section class="legal-section">
-                    <h4>1. Éditeur du site (LCEN Art. 6-III-2)</h4>
+                    <h3>1. Éditeur du site (LCEN Art. 6-III-2)</h3>
                     <p>
                         Conformément à l'article 6-III-2 de la loi n° 2004-575 du 21 juin 2004 pour la Confiance dans l'Économie Numérique (LCEN), l'éditeur de ce site, agissant à titre non professionnel, a choisi de préserver son anonymat. Ses éléments d'identification personnelle ont été régulièrement transmis à l'hébergeur.
                         <br>Contact électronique direct : <a href="mailto:contact@thmarchand.fr">contact@thmarchand.fr</a>
@@ -200,7 +217,7 @@
                 </section>
 
                 <section class="legal-section">
-                    <h4>2. Hébergement &amp; Transferts hors UE (LCEN Art. 6-I-2 &amp; RGPD)</h4>
+                    <h3>2. Hébergement &amp; Transferts hors UE (LCEN Art. 6-I-2 &amp; RGPD)</h3>
                     <p>
                         Ce site est hébergé par GitHub Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.
                         <br>Téléphone : +1 877 448 4820 — Support technique en ligne : <a href="https://support.github.com" target="_blank" rel="noopener noreferrer">support.github.com</a>.
@@ -209,7 +226,7 @@
                 </section>
 
                 <section class="legal-section">
-                    <h4>3. Propriété intellectuelle, Marques &amp; Non-affiliation (CPI Art. L.713-6)</h4>
+                    <h3>3. Propriété intellectuelle, Marques &amp; Non-affiliation (CPI Art. L.713-6)</h3>
                     <p>
                         Ce site est un outil indépendant d'information citoyenne et d'analyse technique. <strong>Il n'est en aucune manière édité, financé, affilié, sponsorisé ni approuvé par la société Électricité de France (EDF SA).</strong>
                         La marque nominale « EDF » et les marques associées citées sont la propriété exclusive de leurs titulaires respectifs et ne sont utilisées ici qu'à des fins purement descriptives de l'origine industrielle des installations, conformément à l'article L.713-6 du Code de la Propriété Intellectuelle.
@@ -217,7 +234,7 @@
                 </section>
 
                 <section class="legal-section">
-                    <h4>4. Origine des données &amp; Licences (Open Data RTE &amp; Polices)</h4>
+                    <h3>4. Origine des données &amp; Licences (Open Data RTE &amp; Polices)</h3>
                     <p>
                         <strong>Données de production :</strong> Les données publiques de production nucléaire sont extraites du portail API Open Data de RTE (Réseau de Transport d'Électricité) et sont réutilisées sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" target="_blank" rel="noopener noreferrer">Licence Ouverte v2.0 (Etalab)</a>.
                         <br><strong>Typographie :</strong> La police de caractères <em>Inter</em> (conçue par Rasmus Andersson) est auto-hébergée localement sous licence libre <a href="fonts/OFL.txt" target="_blank">SIL Open Font License (OFL) version 1.1</a>.
@@ -225,7 +242,7 @@
                 </section>
 
                 <section class="legal-section">
-                    <h4>5. Données personnelles, Droits &amp; Voie de recours CNIL (RGPD Art. 12, 13 &amp; 77)</h4>
+                    <h3>5. Données personnelles, Droits &amp; Voie de recours CNIL (RGPD Art. 12, 13 &amp; 77)</h3>
                     <p>
                         L'éditeur du site ne collecte, ne stocke, ne revend et n'analyse aucune donnée personnelle de ses visiteurs, et n'utilise aucun outil de mesure d'audience ni script tiers.
                         Toutefois, pour assurer la sécurité de l'infrastructure et la prévention des abus (défense contre les attaques DDoS), l'hébergeur GitHub Pages consigne temporairement les adresses IP et requêtes réseau dans ses journaux techniques sur la base de son intérêt légitime (Art. 6.1.f du RGPD) pour une durée glissante n'excédant pas 90 jours.
@@ -237,14 +254,14 @@
                 </section>
 
                 <section class="legal-section">
-                    <h4>6. Traceurs &amp; Cookies (Art. 82 Loi Informatique et Libertés)</h4>
+                    <h3>6. Traceurs &amp; Cookies (Art. 82 Loi Informatique et Libertés)</h3>
                     <p>
                         Ce site n'utilise aucun cookie (ni technique, ni publicitaire, ni d'audience) et n'écrit aucune donnée dans l'espace de stockage de votre navigateur (<code>localStorage</code>, <code>sessionStorage</code>, <code>IndexedDB</code>). Il est totalement exempté de bandeau de consentement conformément aux délibérations n° 2020-091 et 2020-092 de la CNIL.
                     </p>
                 </section>
 
                 <section class="legal-section">
-                    <h4>7. Conditions d'utilisation &amp; Limitation de responsabilité (Art. 1240 Code civil)</h4>
+                    <h3>7. Conditions d'utilisation &amp; Limitation de responsabilité (Art. 1240 Code civil)</h3>
                     <p>
                         Les visualisations, calculs et graphiques sont fournis « en l'état » (<em>as-is</em>), à titre strictement informatif et documentaire, sans garantie d'exhaustivité, d'exactitude absolue ni de continuité de service en temps réel.
                         L'éditeur décline toute responsabilité quant aux interprétations, usages professionnels ou décisions économiques et financières fondées sur les informations consultées sur ce site.
@@ -260,6 +277,7 @@
         </div>
     </dialog>
 
+    <script src="common.js" defer></script>
     <script src="stats.js" defer></script>
 </body>
 </html>

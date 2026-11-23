@@ -1,14 +1,24 @@
-import requests
 import base64
 import json
 import os
-from datetime import datetime, timedelta
 import time
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+import requests
 
 CLIENT_ID = os.environ.get("RTE_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("RTE_CLIENT_SECRET")
-CHEMIN_FICHIER = 'data_nucleaire_france.json'
+CHEMIN_FICHIER = "data_nucleaire_france.json"
 URL_API_RTE = "https://digital.iservices.rte-france.com/open_api/actual_generation/v1/actual_generations_per_unit"
+TZ_PARIS = ZoneInfo("Europe/Paris")
+
+
+def parser_horodatage_paris(iso_str):
+    dt = datetime.fromisoformat(iso_str)
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=TZ_PARIS)
+    return dt.astimezone(TZ_PARIS)
 
 
 def obtenir_token(client_id, client_secret):
@@ -21,14 +31,13 @@ def obtenir_token(client_id, client_secret):
     url = "https://digital.iservices.rte-france.com/token/oauth/"
     headers = {
         "Authorization": f"Basic {b64_credentials}",
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
     }
 
-    response = requests.post(url, headers=headers)
+    response = requests.post(url, headers=headers, timeout=30)
     if response.status_code == 200:
         return response.json()["access_token"]
-    else:
-        raise Exception(f"Erreur d'authentification RTE: {response.text}")
+    raise Exception(f"Erreur d'authentification RTE: {response.text}")
 
 
 def construire_tranches(date_debut, date_fin):
@@ -54,17 +63,20 @@ def interroger_periode_rte(
     annee_cible,
     cache_brut_mensuel_mwh,
     statut_actuel_reacteurs=None,
-    inclure_borne_debut=False
+    puissance_actuelle_reacteurs=None,
+    inclure_borne_debut=False,
 ):
     tranches = construire_tranches(date_debut, date_fin)
     derniere_donnee_recue = date_debut
+    derniere_mesure_unite = {}
+    date_debut_ts = date_debut.timestamp()
 
     for idx, tranche in enumerate(tranches):
-        str_debut = tranche["api_debut"].strftime("%Y-%m-%dT%H:%M:%S+01:00")
-        str_fin = tranche["api_fin"].strftime("%Y-%m-%dT%H:%M:%S+01:00")
+        str_debut = tranche["api_debut"].astimezone(TZ_PARIS).isoformat(timespec="seconds")
+        str_fin = tranche["api_fin"].astimezone(TZ_PARIS).isoformat(timespec="seconds")
 
         params = {"start_date": str_debut, "end_date": str_fin}
-        response = requests.get(URL_API_RTE, headers=headers, params=params)
+        response = requests.get(URL_API_RTE, headers=headers, params=params, timeout=30)
 
         if response.status_code != 200:
             print(f"   [!] Erreur API ({str_debut} -> {str_fin}): {response.text}")
@@ -83,8 +95,8 @@ def interroger_periode_rte(
                     cache_brut_mensuel_mwh[nom_reacteur] = [0.0] * 12
 
                 for releve in unite.get("values", []):
-                    releve_dt = datetime.fromisoformat(releve["start_date"]).replace(tzinfo=None)
-                    valeur_mw = releve.get("value", 0)
+                    releve_dt = parser_horodatage_paris(releve["start_date"])
+                    valeur_mw = float(releve.get("value", 0) or 0)
 
                     if releve_dt.year != annee_cible:
                         continue
@@ -96,7 +108,7 @@ def interroger_periode_rte(
                     condition_debut = (
                         (releve_ts >= vrai_debut_ts)
                         if autoriser_egalite_debut
-                        else (releve_ts > date_debut.timestamp() and releve_ts > vrai_debut_ts)
+                        else (releve_ts > date_debut_ts and releve_ts > vrai_debut_ts)
                     )
 
                     if condition_debut:
@@ -106,10 +118,18 @@ def interroger_periode_rte(
                             mois_idx = releve_dt.month - 1
                             cache_brut_mensuel_mwh[nom_reacteur][mois_idx] += valeur_mw
 
-                    if statut_actuel_reacteurs is not None and releve_dt >= derniere_donnee_recue:
-                        statut_actuel_reacteurs[nom_reacteur] = (valeur_mw > 0)
+                    if releve_ts >= date_debut_ts:
+                        prec = derniere_mesure_unite.get(nom_reacteur)
+                        if prec is None or releve_dt >= prec[0]:
+                            derniere_mesure_unite[nom_reacteur] = (releve_dt, valeur_mw)
 
         time.sleep(0.5)
+
+    for nom_reacteur, (_, mw) in derniere_mesure_unite.items():
+        if statut_actuel_reacteurs is not None:
+            statut_actuel_reacteurs[nom_reacteur] = mw > 0
+        if puissance_actuelle_reacteurs is not None:
+            puissance_actuelle_reacteurs[nom_reacteur] = round(mw, 2) if mw > 0 else 0.0
 
     return derniere_donnee_recue
 
@@ -118,7 +138,7 @@ def construire_resume_annuel(
     cache_brut_mensuel_mwh,
     dernier_horodatage,
     complet=False,
-    backfill_q1_complet=True
+    backfill_q1_complet=True,
 ):
     production_par_reacteur = {}
     mensuel_par_centrale_mwh = {}
@@ -130,7 +150,7 @@ def construire_resume_annuel(
         total_r = round(sum(vals), 2)
         production_par_reacteur[nom_reacteur] = total_r
 
-        nom_centrale = nom_reacteur.rsplit(' ', 1)[0]
+        nom_centrale = nom_reacteur.rsplit(" ", 1)[0]
         if nom_centrale not in mensuel_par_centrale_mwh:
             mensuel_par_centrale_mwh[nom_centrale] = [0.0] * 12
 
@@ -160,12 +180,12 @@ def construire_resume_annuel(
         "production_par_centrale_twh": production_par_centrale_twh,
         "mensuel_par_centrale_twh": mensuel_par_centrale_twh,
         "cache_brut_mwh": production_par_reacteur,
-        "cache_brut_mensuel_mwh": cache_brut_mensuel_mwh
+        "cache_brut_mensuel_mwh": cache_brut_mensuel_mwh,
     }
 
 
 def extraire_donnees_live():
-    maintenant = datetime.now().replace(minute=0, second=0, microsecond=0)
+    maintenant = datetime.now(TZ_PARIS).replace(minute=0, second=0, microsecond=0)
     annee_en_cours = maintenant.year
     annee_precedente = annee_en_cours - 1
     str_annee_cours = str(annee_en_cours)
@@ -174,18 +194,24 @@ def extraire_donnees_live():
     anciennes_donnees = {}
     historique_annuel = {}
     statut_actuel_reacteurs = {}
+    puissance_actuelle_reacteurs = {}
 
     if os.path.exists(CHEMIN_FICHIER):
         try:
-            with open(CHEMIN_FICHIER, 'r', encoding='utf-8') as f:
+            with open(CHEMIN_FICHIER, "r", encoding="utf-8") as f:
                 anciennes_donnees = json.load(f)
             historique_annuel = anciennes_donnees.get("historique_annuel", {})
             statut_actuel_reacteurs = anciennes_donnees.get("cache_statut", {})
+            puissance_actuelle_reacteurs = anciennes_donnees.get("cache_puissance_mw", {})
         except Exception as e:
             print(f"⚠️ Impossible de lire le cache. Erreur: {e}")
 
     marque_page_str = anciennes_donnees.get("horodatage_fin_recherche")
-    date_debut = datetime.fromisoformat(marque_page_str) if marque_page_str else datetime(annee_en_cours, 1, 1)
+    date_debut = (
+        parser_horodatage_paris(marque_page_str)
+        if marque_page_str
+        else datetime(annee_en_cours, 1, 1, tzinfo=TZ_PARIS)
+    )
 
     besoin_backfill_prec = (
         str_annee_prec not in historique_annuel
@@ -195,7 +221,7 @@ def extraire_donnees_live():
         str_annee_cours in historique_annuel
         and not historique_annuel[str_annee_cours].get("backfill_q1_complet", True)
     )
-    changement_annee = (date_debut.year < annee_en_cours)
+    changement_annee = date_debut.year < annee_en_cours
 
     if date_debut >= maintenant and not besoin_backfill_prec and not besoin_backfill_q1_cours and not changement_annee:
         print("⏳ Les données sont déjà à jour.")
@@ -207,7 +233,7 @@ def extraire_donnees_live():
 
     # 1. GESTION DU PASSAGE D'UNE ANNÉE À LA SUIVANTE (ex: 31/12/2026 -> 01/01/2027)
     if date_debut.year == annee_precedente and str_annee_prec in historique_annuel:
-        fin_annee_prec = datetime(annee_en_cours, 1, 1)
+        fin_annee_prec = datetime(annee_en_cours, 1, 1, tzinfo=TZ_PARIS)
         print(f"🔄 Clôture automatique de l'année {annee_precedente} ({date_debut} -> {fin_annee_prec})...")
         cache_mensuel_prec = historique_annuel[str_annee_prec].get("cache_brut_mensuel_mwh", {})
         dernier_dt_prec = interroger_periode_rte(
@@ -217,22 +243,23 @@ def extraire_donnees_live():
             annee_precedente,
             cache_mensuel_prec,
             statut_actuel_reacteurs=statut_actuel_reacteurs,
-            inclure_borne_debut=False
+            puissance_actuelle_reacteurs=puissance_actuelle_reacteurs,
+            inclure_borne_debut=False,
         )
         historique_annuel[str_annee_prec] = construire_resume_annuel(
             cache_mensuel_prec,
-            dernier_dt_prec.isoformat(),
+            dernier_dt_prec.astimezone(TZ_PARIS).isoformat(),
             complet=True,
-            backfill_q1_complet=True
+            backfill_q1_complet=True,
         )
-        date_debut = datetime(annee_en_cours, 1, 1)
+        date_debut = datetime(annee_en_cours, 1, 1, tzinfo=TZ_PARIS)
 
-    # 2. BACKFILL COMPLET DE L'ANNÉE PRÉCÉDENTE SI ELLE N'EST PAS ENCORE COMPLÈTE (ex: 2025)
+    # 2. BACKFILL COMPLET DE L'ANNÉE PRÉCÉDENTE SI ELLE N'EST PAS ENCORE COMPLÈTE
     if str_annee_prec not in historique_annuel or not historique_annuel[str_annee_prec].get("complet", False):
         print(f"📊 Récupération de l'historique complet de l'année précédente ({annee_precedente})...")
         cache_mensuel_prec = {r: [0.0] * 12 for r in statut_actuel_reacteurs.keys()}
-        debut_prec = datetime(annee_precedente, 1, 1)
-        fin_prec = datetime(annee_en_cours, 1, 1)
+        debut_prec = datetime(annee_precedente, 1, 1, tzinfo=TZ_PARIS)
+        fin_prec = datetime(annee_en_cours, 1, 1, tzinfo=TZ_PARIS)
         dernier_dt_prec = interroger_periode_rte(
             headers,
             debut_prec,
@@ -240,19 +267,20 @@ def extraire_donnees_live():
             annee_precedente,
             cache_mensuel_prec,
             statut_actuel_reacteurs=None,
-            inclure_borne_debut=True
+            puissance_actuelle_reacteurs=None,
+            inclure_borne_debut=True,
         )
         historique_annuel[str_annee_prec] = construire_resume_annuel(
             cache_mensuel_prec,
-            dernier_dt_prec.isoformat(),
+            dernier_dt_prec.astimezone(TZ_PARIS).isoformat(),
             complet=True,
-            backfill_q1_complet=True
+            backfill_q1_complet=True,
         )
         print(f"✅ Historique {annee_precedente} consolidé : {historique_annuel[str_annee_prec]['total_france_twh']} TWh")
 
-    # 3. PRÉPARATION DE L'ANNÉE EN COURS (ex: 2026 ou 2027)
+    # 3. PRÉPARATION DE L'ANNÉE EN COURS
     if str_annee_cours not in historique_annuel or date_debut.year != annee_en_cours:
-        date_debut = datetime(annee_en_cours, 1, 1)
+        date_debut = datetime(annee_en_cours, 1, 1, tzinfo=TZ_PARIS)
         cache_mensuel_cours = {r: [0.0] * 12 for r in statut_actuel_reacteurs.keys()}
         inclure_debut_cours = True
         backfill_q1_ok = True
@@ -267,12 +295,13 @@ def extraire_donnees_live():
         cache_q1 = {r: [0.0] * 12 for r in cache_mensuel_cours.keys()}
         interroger_periode_rte(
             headers,
-            datetime(annee_en_cours, 1, 1),
-            datetime(annee_en_cours, 4, 1),
+            datetime(annee_en_cours, 1, 1, tzinfo=TZ_PARIS),
+            datetime(annee_en_cours, 4, 1, tzinfo=TZ_PARIS),
             annee_en_cours,
             cache_q1,
             statut_actuel_reacteurs=None,
-            inclure_borne_debut=True
+            puissance_actuelle_reacteurs=None,
+            inclure_borne_debut=True,
         )
         for nom_r, vals_q1 in cache_q1.items():
             if nom_r not in cache_mensuel_cours:
@@ -293,42 +322,52 @@ def extraire_donnees_live():
             annee_en_cours,
             cache_mensuel_cours,
             statut_actuel_reacteurs=statut_actuel_reacteurs,
-            inclure_borne_debut=inclure_debut_cours
+            puissance_actuelle_reacteurs=puissance_actuelle_reacteurs,
+            inclure_borne_debut=inclure_debut_cours,
         )
 
+    horodatage_paris = derniere_donnee_recue.astimezone(TZ_PARIS)
     resume_cours = construire_resume_annuel(
         cache_mensuel_cours,
-        derniere_donnee_recue.isoformat(),
+        horodatage_paris.isoformat(),
         complet=False,
-        backfill_q1_complet=backfill_q1_ok
+        backfill_q1_complet=backfill_q1_ok,
     )
     historique_annuel[str_annee_cours] = resume_cours
-
-    # On conserve l'historique complet des années disponibles (jusqu'à 5 ans)
     historique_trie = dict(sorted(historique_annuel.items()))
 
     nb_en_production = sum(1 for en_marche in statut_actuel_reacteurs.values() if en_marche)
+    puissance_totale_mw = round(
+        sum(
+            mw
+            for nom, mw in puissance_actuelle_reacteurs.items()
+            if statut_actuel_reacteurs.get(nom, False) and mw > 0
+        ),
+        2,
+    )
 
     data_export = {
         "annee_en_cours": annee_en_cours,
         "annee_precedente": annee_precedente,
         "annees_disponibles": list(historique_trie.keys()),
-        "derniere_mise_a_jour": derniere_donnee_recue.strftime("%d/%m/%Y à %H:%M"),
-        "horodatage_fin_recherche": derniere_donnee_recue.isoformat(),
+        "derniere_mise_a_jour": horodatage_paris.strftime("%d/%m/%Y à %H:%M"),
+        "horodatage_fin_recherche": horodatage_paris.isoformat(),
         "total_france_twh": resume_cours["total_france_twh"],
         "nombre_centrales_actives": len(resume_cours["production_par_centrale_twh"]),
         "nombre_reacteurs_total": len(resume_cours["cache_brut_mwh"]),
         "nombre_reacteurs_en_production": nb_en_production,
+        "puissance_totale_mw": puissance_totale_mw,
         "production_par_centrale_twh": resume_cours["production_par_centrale_twh"],
         "cache_brut_mwh": resume_cours["cache_brut_mwh"],
         "cache_statut": statut_actuel_reacteurs,
-        "historique_annuel": historique_trie
+        "cache_puissance_mw": puissance_actuelle_reacteurs,
+        "historique_annuel": historique_trie,
     }
 
-    with open(CHEMIN_FICHIER, 'w', encoding='utf-8') as f:
-        json.dump(data_export, f, ensure_ascii=False, indent=4)
+    with open(CHEMIN_FICHIER, "w", encoding="utf-8") as f:
+        json.dump(data_export, f, ensure_ascii=False, indent=2)
 
-    print(f"\n✅ Terminé ! JSON généré avec succès ({annee_en_cours}). Marque-page placé à : {derniere_donnee_recue}")
+    print(f"\n✅ Terminé ! JSON généré avec succès ({annee_en_cours}). Marque-page placé à : {horodatage_paris}")
 
 
 if __name__ == "__main__":
