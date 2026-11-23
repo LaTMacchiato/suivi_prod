@@ -831,14 +831,10 @@ details.centrale-card[open] > summary .icon-arrow {
 }
 
 .card-details-footer {
-    margin-top: 8px;
+    margin-top: 2px;
     padding-top: 10px;
-    border-top: 1px dashed var(--border);
     display: flex;
     justify-content: flex-end;
-}
-.penly-card .card-details-footer {
-    border-top-color: rgba(255, 255, 255, 0.2);
 }
 
 .card-stats-link {
