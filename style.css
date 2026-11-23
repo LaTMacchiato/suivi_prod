@@ -423,6 +423,9 @@ details.penly-card[open] > summary .penly-arrow {
 .penly-card .card-avail-bar {
     background: #4ADE80;
 }
+.penly-card .card-avail-bar.is-partial {
+    background: #60A5FA;
+}
 
 /* Barre d'outils du parc */
 .parc-toolbar {
@@ -660,8 +663,8 @@ details.centrale-card:not([open])::details-content {
     color: var(--env-green);
 }
 .card-status-pill.is-partial {
-    background: var(--pill-orange-bg);
-    color: var(--edf-orange);
+    background: var(--pill-blue-bg);
+    color: var(--edf-mid-blue);
 }
 .card-status-pill.is-off {
     background: var(--bg-body);
@@ -733,7 +736,7 @@ details.centrale-card:not([open])::details-content {
     transition: width 0.3s ease;
 }
 .card-avail-bar.is-partial {
-    background: var(--edf-orange);
+    background: var(--edf-mid-blue);
 }
 
 .icon-arrow {
