@@ -139,11 +139,8 @@
     function creerBadgeStatutCentrale(nbEnLigne, nbUnites) {
         const badge = document.createElement('span');
         badge.className = 'card-status-pill';
-        if (nbUnites > 0 && nbEnLigne === nbUnites) {
-            badge.classList.add('is-full');
-            badge.textContent = '100 %';
-        } else if (nbEnLigne > 0) {
-            badge.classList.add('is-partial');
+        if (nbUnites > 0 && nbEnLigne > 0) {
+            badge.classList.add(nbEnLigne === nbUnites ? 'is-full' : 'is-partial');
             badge.textContent = `${nbEnLigne}/${nbUnites} actif${nbEnLigne > 1 ? 's' : ''}`;
         } else {
             badge.classList.add('is-off');
