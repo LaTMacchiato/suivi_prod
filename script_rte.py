@@ -65,26 +65,49 @@ def interroger_periode_rte(
     statut_actuel_reacteurs=None,
     puissance_actuelle_reacteurs=None,
     inclure_borne_debut=False,
+    limite_max_dt=None,
 ):
     tranches = construire_tranches(date_debut, date_fin)
     derniere_donnee_recue = date_debut
     derniere_mesure_unite = {}
     date_debut_ts = date_debut.timestamp()
+    nb_nouveaux_releves = 0
 
     for idx, tranche in enumerate(tranches):
-        str_debut = tranche["api_debut"].astimezone(TZ_PARIS).isoformat(timespec="seconds")
-        str_fin = tranche["api_fin"].astimezone(TZ_PARIS).isoformat(timespec="seconds")
+        api_debut = tranche["api_debut"]
+        api_fin = tranche["api_fin"]
+        str_debut = api_debut.astimezone(TZ_PARIS).isoformat(timespec="seconds")
+        str_fin = api_fin.astimezone(TZ_PARIS).isoformat(timespec="seconds")
 
         params = {"start_date": str_debut, "end_date": str_fin}
         response = requests.get(URL_API_RTE, headers=headers, params=params, timeout=30)
 
         if response.status_code != 200:
-            print(f"   [!] Erreur API ({str_debut} -> {str_fin}): {response.text}")
-            continue
+            print(f"   [!] Erreur API HTTP {response.status_code} ({str_debut} -> {str_fin}): {response.text}")
+            if limite_max_dt is not None and api_fin > limite_max_dt:
+                fallback_fin = limite_max_dt
+                fallback_debut = api_debut
+                if (fallback_fin - fallback_debut).total_seconds() < 259200:
+                    fallback_debut = fallback_fin - timedelta(days=3)
+                str_debut = fallback_debut.astimezone(TZ_PARIS).isoformat(timespec="seconds")
+                str_fin = fallback_fin.astimezone(TZ_PARIS).isoformat(timespec="seconds")
+                print(f"   [↺] Tentative de repli ({str_debut} -> {str_fin})...")
+                response = requests.get(
+                    URL_API_RTE,
+                    headers=headers,
+                    params={"start_date": str_debut, "end_date": str_fin},
+                    timeout=30,
+                )
+                if response.status_code != 200:
+                    print(f"   [!] Échec du repli HTTP {response.status_code} : {response.text}")
+                    continue
+                api_fin = fallback_fin
+            else:
+                continue
 
         data = response.json()
         vrai_debut_ts = tranche["vrai_debut"].timestamp()
-        api_fin_ts = tranche["api_fin"].timestamp()
+        api_fin_ts = api_fin.timestamp()
         autoriser_egalite_debut = inclure_borne_debut and (idx == 0)
 
         for unite in data.get("actual_generations_per_unit", []):
@@ -101,6 +124,9 @@ def interroger_periode_rte(
                     if releve_dt.year != annee_cible:
                         continue
 
+                    if limite_max_dt is not None and releve_dt > limite_max_dt:
+                        continue
+
                     releve_ts = releve_dt.timestamp()
                     if releve_ts > api_fin_ts:
                         continue
@@ -112,6 +138,7 @@ def interroger_periode_rte(
                     )
 
                     if condition_debut:
+                        nb_nouveaux_releves += 1
                         if releve_dt > derniere_donnee_recue:
                             derniere_donnee_recue = releve_dt
                         if valeur_mw > 0:
@@ -130,6 +157,11 @@ def interroger_periode_rte(
             statut_actuel_reacteurs[nom_reacteur] = mw > 0
         if puissance_actuelle_reacteurs is not None:
             puissance_actuelle_reacteurs[nom_reacteur] = round(mw, 2) if mw > 0 else 0.0
+
+    print(
+        f"   ↳ {nb_nouveaux_releves} nouveaux relevés intégrés "
+        f"({len(derniere_mesure_unite)} unités lues, dernier horodatage : {derniere_donnee_recue.isoformat()})"
+    )
 
     return derniere_donnee_recue
 
@@ -312,18 +344,23 @@ def extraire_donnees_live():
         backfill_q1_ok = True
 
     # 4. MISE À JOUR INCRÉMENTALE DE L'ANNÉE EN COURS
+    # RTE publie les données horaires sur une fenêtre bornée à minuit du lendemain (J+1 00:00).
     derniere_donnee_recue = date_debut
     if date_debut < maintenant:
-        print(f"⚡ Extraction incrémentale {annee_en_cours} ({date_debut} -> {maintenant})...")
+        fin_journee_courante = datetime(
+            maintenant.year, maintenant.month, maintenant.day, tzinfo=TZ_PARIS
+        ) + timedelta(days=1)
+        print(f"⚡ Extraction incrémentale {annee_en_cours} ({date_debut} -> {fin_journee_courante}, max {maintenant})...")
         derniere_donnee_recue = interroger_periode_rte(
             headers,
             date_debut,
-            maintenant,
+            fin_journee_courante,
             annee_en_cours,
             cache_mensuel_cours,
             statut_actuel_reacteurs=statut_actuel_reacteurs,
             puissance_actuelle_reacteurs=puissance_actuelle_reacteurs,
             inclure_borne_debut=inclure_debut_cours,
+            limite_max_dt=maintenant,
         )
 
     horodatage_paris = derniere_donnee_recue.astimezone(TZ_PARIS)
