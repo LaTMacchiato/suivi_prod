@@ -2,7 +2,7 @@
     const {
         formatInt,
         formatFr1,
-        formatFr3,
+        formatFr2,
         afficherDateMaj,
         creerUrl
     } = window.ProdCommon;
@@ -207,7 +207,7 @@
 
         const prodDiv = document.createElement('div');
         prodDiv.className = 'penly-prod';
-        prodDiv.textContent = `${formatFr3(prodTwh)} `;
+        prodDiv.textContent = `${formatFr2(prodTwh)} `;
 
         const uniteProd = document.createElement('span');
         uniteProd.className = 'penly-prod-unite';
@@ -285,7 +285,7 @@
 
         const prodDiv = document.createElement('div');
         prodDiv.className = 'centrale-prod';
-        prodDiv.textContent = `${formatFr3(prodTwh)} `;
+        prodDiv.textContent = `${formatFr2(prodTwh)} `;
 
         const uniteSpan = document.createElement('span');
         uniteSpan.className = 'centrale-prod-unite';
@@ -563,7 +563,7 @@
 
                 const totalFranceEl = document.getElementById('total-france');
                 if (totalFranceEl) {
-                    totalFranceEl.innerHTML = `${formatFr1(data.total_france_twh)}<span class="kpi-unit">TWh</span>`;
+                    totalFranceEl.innerHTML = `${formatFr2(data.total_france_twh)}<span class="kpi-unit">TWh</span>`;
                 }
 
                 const rOnEl = document.getElementById('reacteurs-on');
